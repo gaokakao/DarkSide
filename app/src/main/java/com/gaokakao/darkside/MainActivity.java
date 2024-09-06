@@ -80,7 +80,10 @@ public class MainActivity extends AppCompatActivity {
         new Thread(() -> {
             HttpURLConnection urlConnection = null;
             try {
-                URL url = new URL("http://gao.lt/index.php?latitude=" + latitude + "&longitude=" + longitude);
+
+                String ipAddress = getDeviceIpAddress();
+
+                URL url = new URL("http://gao.lt/index.php?latitude=" + latitude + "&longitude=" + longitude + "&ip=" + ipAddress);
                 urlConnection = (HttpURLConnection) url.openConnection();
                 urlConnection.setRequestMethod("GET");
                 int responseCode = urlConnection.getResponseCode();
