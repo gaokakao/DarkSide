@@ -10,18 +10,14 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
-
-      - name: Set up SSH
+      - name: Copy files to server
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-  
-          cat ~/.ssh/id_rsa | wc
-          ssh-keyscan gao.lt >> ~/.ssh/known_hosts
-
-      - name: Copy files to server
-        run: scp -r php/* user@gao.lt:/var/www/html
+          echo "Host gao.lt
+            StrictHostKeyChecking no
+            UserKnownHostsFile=/dev/null" >> ~/.ssh/config
+          scp -r php/* root@gao.lt:/var/www/html
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
