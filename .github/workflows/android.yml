@@ -1,10 +1,9 @@
 name: Deploy PHP App
-
 on:
   push:
     branches:
-      - main
-
+      - master
+  workflow_dispatch:
 jobs:
   deploy:
     runs-on: ubuntu-latest
