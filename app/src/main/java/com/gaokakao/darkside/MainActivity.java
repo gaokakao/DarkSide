@@ -1,41 +1,27 @@
 package com.gaokakao.darkside;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 import android.Manifest;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.net.ConnectivityManager;
-import android.net.Network;
-import android.net.NetworkCapabilities;
-import android.net.wifi.WifiManager;
-import android.net.wifi.WifiInfo;
 import android.os.Bundle;
+import android.os.Handler;
 import android.provider.Settings;
-import android.text.TextUtils;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
-
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
 import java.net.URL;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
     private FusedLocationProviderClient fusedLocationClient;
@@ -43,8 +29,10 @@ public class MainActivity extends AppCompatActivity {
     private TextView latitudeText;
     private TextView longitudeText;
     private TextView resultTextView;
-    private TextView ipTextView;
+    private TextView ipAddressTextView;
     private final int LOCATION_REQUEST_CODE = 10001;
+    private final Handler handler = new Handler();
+    private Runnable ipFetchRunnable;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,20 +41,21 @@ public class MainActivity extends AppCompatActivity {
         latitudeText = findViewById(R.id.latitude_text);
         longitudeText = findViewById(R.id.longitude_text);
         resultTextView = findViewById(R.id.result_text_view);
-        ipTextView = findViewById(R.id.ip_text_view);
+        ipAddressTextView = findViewById(R.id.ip_address_text_view);
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             startLocationUpdates();
         } else {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_REQUEST_CODE);
         }
+        startIpAddressRefresh();
     }
 
     private void startLocationUpdates() {
         LocationRequest locationRequest = LocationRequest.create();
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        locationRequest.setInterval(500); // Update interval set to 500 milliseconds
-        locationRequest.setFastestInterval(500); // Fastest interval set to 500 milliseconds
+        locationRequest.setInterval(200);
+        locationRequest.setFastestInterval(200);
         locationCallback = new LocationCallback() {
             @Override
             public void onLocationResult(LocationResult locationResult) {
@@ -78,20 +67,18 @@ public class MainActivity extends AppCompatActivity {
                     String lon = String.valueOf(location.getLongitude());
                     latitudeText.setText("Lat: " + lat);
                     longitudeText.setText("Lon: " + lon);
-                    String ip = getIpAddress();
-                    ipTextView.setText("IP: " + ip);
-                    sendLocationToServer(lat, lon, ip);
+                    sendLocationToServer(lat, lon);
                 }
             }
         };
         fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null);
     }
 
-    private void sendLocationToServer(String latitude, String longitude, String ip) {
+    private void sendLocationToServer(String latitude, String longitude) {
         new Thread(() -> {
             HttpURLConnection urlConnection = null;
             try {
-                URL url = new URL("http://gao.lt/index.php?latitude=" + latitude + "&longitude=" + longitude + "&ip=" + ip);
+                URL url = new URL("http://gao.lt/index.php?latitude=" + latitude + "&longitude=" + longitude);
                 urlConnection = (HttpURLConnection) url.openConnection();
                 urlConnection.setRequestMethod("GET");
                 int responseCode = urlConnection.getResponseCode();
@@ -106,16 +93,16 @@ public class MainActivity extends AppCompatActivity {
                 runOnUiThread(() -> {
                     if (responseCode == HttpURLConnection.HTTP_OK) {
                         resultTextView.setText("Success: " + response.toString());
-                        resultTextView.setBackgroundColor(ContextCompat.getColor(MainActivity.this, android.R.color.holo_green_light));
+                        resultTextView.setBackgroundColor(getResources().getColor(android.R.color.holo_green_light));
                     } else {
                         resultTextView.setText("Failed: " + responseMessage);
-                        resultTextView.setBackgroundColor(ContextCompat.getColor(MainActivity.this, android.R.color.holo_red_light));
+                        resultTextView.setBackgroundColor(getResources().getColor(android.R.color.holo_red_light));
                     }
                 });
             } catch (Exception e) {
                 runOnUiThread(() -> {
                     resultTextView.setText("Exception: " + e.getMessage());
-                    resultTextView.setBackgroundColor(ContextCompat.getColor(MainActivity.this, android.R.color.holo_red_light));
+                    resultTextView.setBackgroundColor(getResources().getColor(android.R.color.holo_red_light));
                 });
             } finally {
                 if (urlConnection != null) {
@@ -125,35 +112,42 @@ public class MainActivity extends AppCompatActivity {
         }).start();
     }
 
-    private String getIpAddress() {
-        try {
-            ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-            Network activeNetwork = cm.getActiveNetwork();
-            if (activeNetwork != null) {
-                NetworkCapabilities capabilities = cm.getNetworkCapabilities(activeNetwork);
-                if (capabilities != null && capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
-                    WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-                    WifiInfo wifiInfo = wifiManager.getConnectionInfo();
-                    int ipAddress = wifiInfo.getIpAddress();
-                    return String.format(Locale.getDefault(), "%d.%d.%d.%d",
-                            (ipAddress & 0xFF),
-                            (ipAddress >> 8 & 0xFF),
-                            (ipAddress >> 16 & 0xFF),
-                            (ipAddress >> 24 & 0xFF));
-                } else if (capabilities != null && capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
-                    for (NetworkInterface networkInterface : Collections.list(NetworkInterface.getNetworkInterfaces())) {
-                        for (InetAddress inetAddress : Collections.list(networkInterface.getInetAddresses())) {
-                            if (!inetAddress.isLoopbackAddress() && inetAddress.isSiteLocalAddress()) {
-                                return inetAddress.getHostAddress();
-                            }
-                        }
-                    }
+    private void startIpAddressRefresh() {
+        ipFetchRunnable = new Runnable() {
+            @Override
+            public void run() {
+                refreshIpAddress();
+                handler.postDelayed(this, 200); // Schedule next update in 200 milliseconds
+            }
+        };
+        handler.post(ipFetchRunnable);
+    }
+
+    private void refreshIpAddress() {
+        new Thread(() -> {
+            HttpURLConnection urlConnection = null;
+            try {
+                URL url = new URL("https://api.ipify.org?format=json");
+                urlConnection = (HttpURLConnection) url.openConnection();
+                urlConnection.setRequestMethod("GET");
+                BufferedReader in = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
+                StringBuilder response = new StringBuilder();
+                String line;
+                while ((line = in.readLine()) != null) {
+                    response.append(line);
+                }
+                in.close();
+                runOnUiThread(() -> {
+                    ipAddressTextView.setText("IP: " + response.toString());
+                });
+            } catch (Exception e) {
+                runOnUiThread(() -> ipAddressTextView.setText("IP Fetch Error"));
+            } finally {
+                if (urlConnection != null) {
+                    urlConnection.disconnect();
                 }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return "unknown";
+        }).start();
     }
 
     @Override
@@ -162,6 +156,13 @@ public class MainActivity extends AppCompatActivity {
         if (locationCallback != null) {
             fusedLocationClient.removeLocationUpdates(locationCallback);
         }
+        handler.removeCallbacks(ipFetchRunnable); // Stop updating IP address when paused
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        startIpAddressRefresh(); // Resume updating IP address when resumed
     }
 
     @Override
