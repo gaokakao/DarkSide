@@ -126,17 +126,27 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void refreshIpAddress() {
-        WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
-        WifiInfo wifiInfo = wifiManager.getConnectionInfo();
-        String ipAddress = intToIp(wifiInfo.getIpAddress());
-        ipAddressTextView.setText("IP: " + ipAddress);
+        new Thread(() -> {
+            try {
+                String ipAddress = getDeviceIpAddress();
+                runOnUiThread(() -> {
+                    ipAddressTextView.setText("IP: " + ipAddress);
+                });
+            } catch (Exception e) {
+                runOnUiThread(() -> ipAddressTextView.setText("IP Fetch Error"));
+            }
+        }).start();
     }
 
-    private String intToIp(int i) {
-        return (i & 0xFF) + "." +
-                ((i >> 8) & 0xFF) + "." +
-                ((i >> 16) & 0xFF) + "." +
-                ((i >> 24) & 0xFF);
+    private String getDeviceIpAddress() throws Exception {
+        WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
+        WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+        int ipAddressInt = wifiInfo.getIpAddress();
+        return String.format("%d.%d.%d.%d",
+                (ipAddressInt & 0xff),
+                (ipAddressInt >> 8 & 0xff),
+                (ipAddressInt >> 16 & 0xff),
+                (ipAddressInt >> 24 & 0xff));
     }
 
     @Override
