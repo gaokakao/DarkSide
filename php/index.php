@@ -19,9 +19,9 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 // Insert or update data
-$sql = "INSERT INTO gps (latitude, longitude, ip, city, timestamp) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE latitude=?, longitude=?, city=?, timestamp=?";
+$sql = "INSERT INTO gps (latitude, longitude, ip, city, timestamp) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE latitude=?, longitude=?";
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("ssssssss", $latitude, $longitude, $ip, $city, $timestamp, $latitude, $longitude, $city, $timestamp);
+$stmt->bind_param("ssssssss", $latitude, $longitude, $ip, $city, $timestamp, $latitude, $longitude);
 $stmt->execute();
 echo json_encode(['status' => 'OK', 'city' => $city]);
 $conn->close();

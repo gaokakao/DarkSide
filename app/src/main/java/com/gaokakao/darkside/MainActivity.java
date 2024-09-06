@@ -6,6 +6,8 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
@@ -124,30 +126,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void refreshIpAddress() {
-        new Thread(() -> {
-            HttpURLConnection urlConnection = null;
-            try {
-                URL url = new URL("https://api.ipify.org?format=json");
-                urlConnection = (HttpURLConnection) url.openConnection();
-                urlConnection.setRequestMethod("GET");
-                BufferedReader in = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
-                StringBuilder response = new StringBuilder();
-                String line;
-                while ((line = in.readLine()) != null) {
-                    response.append(line);
-                }
-                in.close();
-                runOnUiThread(() -> {
-                    ipAddressTextView.setText("IP: " + response.toString());
-                });
-            } catch (Exception e) {
-                runOnUiThread(() -> ipAddressTextView.setText("IP Fetch Error"));
-            } finally {
-                if (urlConnection != null) {
-                    urlConnection.disconnect();
-                }
-            }
-        }).start();
+        WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
+        WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+        String ipAddress = intToIp(wifiInfo.getIpAddress());
+        ipAddressTextView.setText("IP: " + ipAddress);
+    }
+
+    private String intToIp(int i) {
+        return (i & 0xFF) + "." +
+                ((i >> 8) & 0xFF) + "." +
+                ((i >> 16) & 0xFF) + "." +
+                ((i >> 24) & 0xFF);
     }
 
     @Override
