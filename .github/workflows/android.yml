@@ -1,19 +1,22 @@
-name: Deploy PHP App
+name: deploy
 on:
   push:
     branches:
-      - master
-  workflow_dispatch:
+      - main
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-      
       - name: Copy files to server
-        run: scp -r php/* * user@gao.lt:/var/www/html
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          echo "Host gao.lt
+            StrictHostKeyChecking no
+            UserKnownHostsFile=/dev/null" >> ~/.ssh/config
+          scp -r php/* user@gao.lt:/var/www/html
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          SSH_HOST: ${{ secrets.SSH_HOST }}
-          SSH_USER: ${{ secrets.SSH_USER }}
