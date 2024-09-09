@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Darkside"
+rootProject.name = "DarkSide"
 include(":app")
