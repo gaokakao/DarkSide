@@ -4,46 +4,15 @@
     android:layout_height="match_parent"
     android:gravity="center">
 
-    <LinearLayout
+    <TextView
+        android:id="@+id/usernameTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:gravity="center">
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textColor="#FF5733"
+        android:fontFamily="sans-serif"
+        android:gravity="center"
+        android:visibility="gone"/>
 
-        <TextView
-            android:id="@+id/enterUsernameLabel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Enter Username"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:textColor="#FF5733"
-            android:fontFamily="sans-serif"
-            android:gravity="center"/>
-
-        <EditText
-            android:id="@+id/usernameEditText"
-            android:layout_width="200dp"
-            android:layout_height="wrap_content"
-            android:hint="Username"
-            android:inputType="text"/>
-
-        <Button
-            android:id="@+id/submitButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Submit"/>
-
-        <TextView
-            android:id="@+id/usernameTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:textColor="#FF5733"
-            android:fontFamily="sans-serif"
-            android:gravity="center"
-            android:visibility="gone"/>
-
-    </LinearLayout>
 </RelativeLayout>
