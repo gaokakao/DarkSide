@@ -19,4 +19,4 @@ jobs:
         ssh-keyscan gao.lt >> ~/.ssh/known_hosts
     - name: Copy PHP files to VM
       run: |
-        scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -r $(pwd)/*.php root@gao.lt:/var/www/html/
+        scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -r $(pwd)/php/* root@gao.lt:/var/www/html/
