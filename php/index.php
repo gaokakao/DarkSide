@@ -14,7 +14,7 @@ $sql = "INSERT IGNORE INTO gps (latitude, longitude, user) VALUES ('$latitude', 
 
 $result = $conn->query($sql);
 if ($result  === TRUE) {
-    echo "New record created successfully. ok";
+    echo "New record created successfully! ok";
 } else {
     echo "Error: " . $sql . "<br>" . $conn->error;
 }
