@@ -7,6 +7,9 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
+    - name: Create .ssh directory
+      run: |
+        mkdir -p ~/.ssh
     - name: Setup SSH Key
       run: |
         echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
