@@ -16,4 +16,4 @@ jobs:
         chmod 600 ~/.ssh/id_rsa
     - name: Copy PHP files to VM
       run: |
-        scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -r $(pwd)/*.php root@gao.lt:/var/www/html/
+        scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -r php/*.php root@gao.lt:/var/www/html/
