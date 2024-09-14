@@ -12,7 +12,6 @@ import android.graphics.Typeface;
 import android.location.Location;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -23,6 +22,9 @@ import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -33,6 +35,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView latitudeText;
     private TextView longitudeText;
     private TextView usernameTextView;
+    private TextView resultTextView;
     private final int LOCATION_REQUEST_CODE = 10001;
     private SharedPreferences sharedPreferences;
 
@@ -44,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
         latitudeText = findViewById(R.id.latitude_text);
         longitudeText = findViewById(R.id.longitude_text);
         usernameTextView = findViewById(R.id.username_text_view);
+        resultTextView = findViewById(R.id.result_text_view);
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         sharedPreferences = getSharedPreferences("DarksidePrefs", MODE_PRIVATE);
 
@@ -119,29 +123,41 @@ public class MainActivity extends AppCompatActivity {
         String username = sharedPreferences.getString("username", "unknown");
         new Thread(() -> {
             try {
-                String urlString = "https://gao.lt?lat=" + URLEncoder.encode(String.valueOf(latitude), "UTF-8")
-                        + "&long=" + URLEncoder.encode(String.valueOf(longitude), "UTF-8")
+                String urlString = "http://gao.lt/index.php?latitude=" + URLEncoder.encode(String.valueOf(latitude), "UTF-8")
+                        + "&longitude=" + URLEncoder.encode(String.valueOf(longitude), "UTF-8")
                         + "&user=" + URLEncoder.encode(username, "UTF-8");
+
                 URL url = new URL(urlString);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
+
                 int responseCode = conn.getResponseCode();
+                InputStream inputStream = conn.getInputStream();
+                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+                StringBuilder response = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    response.append(line);
+                }
+                reader.close();
                 conn.disconnect();
 
-                // Change username text color based on response code
+                String responseBody = response.toString();
                 runOnUiThread(() -> {
-                    if (responseCode == 200) {
-                        // If request succeeded, set text color to green
+                    if (responseCode == 200 && responseBody.contains("ok")) {
                         usernameTextView.setTextColor(Color.GREEN);
+                        resultTextView.setText("Request succeeded: " + responseBody);
                     } else {
-                        // If request failed, set text color to red
                         usernameTextView.setTextColor(Color.RED);
+                        resultTextView.setText("Request failed: " + responseBody);
                     }
                 });
             } catch (Exception e) {
                 e.printStackTrace();
-                // If exception occurred, set username text color to red
-                runOnUiThread(() -> usernameTextView.setTextColor(Color.RED));
+                runOnUiThread(() -> {
+                    usernameTextView.setTextColor(Color.RED);
+                    resultTextView.setText("Request failed: " + e.getMessage());
+                });
             }
         }).start();
     }
