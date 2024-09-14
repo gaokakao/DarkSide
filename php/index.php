@@ -1,5 +1,5 @@
 <?php
-$servername = "localhost";a
+$servername = "localhost";
 $username = "user";
 $password = "user";
 $dbname = "gps";
