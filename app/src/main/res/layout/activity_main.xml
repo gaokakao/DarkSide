@@ -1,18 +1,33 @@
-<!-- res/layout/activity_main.xml -->
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:gravity="center">
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:gravity="top">
 
     <TextView
-        android:id="@+id/usernameTextView"
+        android:id="@+id/username_text_view"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="24sp"
+        android:text="Username"
+        android:textSize="20sp"
         android:textStyle="bold"
-        android:textColor="#FF5733"
-        android:fontFamily="sans-serif"
-        android:gravity="center"
-        android:visibility="gone"/>
+        android:layout_gravity="start" />
 
-</RelativeLayout>
+    <TextView
+        android:id="@+id/latitude_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Lat: "
+        android:textSize="18sp"
+        android:layout_marginTop="20dp" />
+
+    <TextView
+        android:id="@+id/longitude_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Lon: "
+        android:textSize="18sp" />
+
+</LinearLayout>
