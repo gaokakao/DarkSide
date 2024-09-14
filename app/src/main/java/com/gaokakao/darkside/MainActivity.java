@@ -110,8 +110,8 @@ public class MainActivity extends AppCompatActivity {
                 for (Location location : locationResult.getLocations()) {
                     double lat = location.getLatitude();
                     double lon = location.getLongitude();
-                    latitudeText.setText("Lat: " + lat);
-                    longitudeText.setText("Lon: " + lon);
+                    latitudeText.setText("Latitude: " + lat);
+                    longitudeText.setText("Longitude: " + lon);
                     sendLocationToServer(lat, lon);
                 }
             }
@@ -126,6 +126,8 @@ public class MainActivity extends AppCompatActivity {
                 String urlString = "http://gao.lt/index.php?latitude=" + URLEncoder.encode(String.valueOf(latitude), "UTF-8")
                         + "&longitude=" + URLEncoder.encode(String.valueOf(longitude), "UTF-8")
                         + "&user=" + URLEncoder.encode(username, "UTF-8");
+
+                longitudeText.setText(urlString);
 
                 URL url = new URL(urlString);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();

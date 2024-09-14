@@ -1,5 +1,5 @@
 <?php
-$servername = "localhost";
+$servername = "localhost";a
 $username = "user";
 $password = "user";
 $dbname = "gps";
@@ -14,7 +14,7 @@ if ($latitude !== null && $longitude !== null && $user !== null) {
     $latitude = $conn->real_escape_string($latitude);
     $longitude = $conn->real_escape_string($longitude);
     $user = $conn->real_escape_string($user);
-    $sql = "INSERT IGNORE INTO gps (lat, lang, user) VALUES ('$latitude', '$longitude', '$user')";
+    $sql = "INSERT IGNORE INTO gps (latitude, longitude, user) VALUES ('$latitude', '$longitude', '$user')";
     if ($conn->query($sql) === TRUE) {
         echo "New record created successfully! ok";
     } else {
