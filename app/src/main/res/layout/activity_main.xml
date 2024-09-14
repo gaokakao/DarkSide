@@ -11,7 +11,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Username"
-        android:textSize="200sp"
+        android:textSize="20sp"
         android:textStyle="bold"
         android:layout_gravity="start" />
 
@@ -20,7 +20,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Lat: "
-        android:textSize="180sp"
+        android:textSize="18sp"
         android:layout_marginTop="20dp" />
 
     <TextView

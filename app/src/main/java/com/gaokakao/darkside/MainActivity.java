@@ -127,8 +127,6 @@ public class MainActivity extends AppCompatActivity {
                         + "&longitude=" + URLEncoder.encode(String.valueOf(longitude), "UTF-8")
                         + "&user=" + URLEncoder.encode(username, "UTF-8");
 
-                longitudeText.setText(urlString);
-
                 URL url = new URL(urlString);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
