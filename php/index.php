@@ -14,13 +14,12 @@ $latitude = isset($_GET['latitude']) ? $_GET['latitude'] : '';
 $longitude = isset($_GET['longitude']) ? $_GET['longitude'] : '';
 $user = isset($_GET['user']) ? $_GET['user'] : '';
 
-$sql = "INSERT IGNORE INTO gps (latitude, longitude, user) VALUES ('$latitude', '$longitude', '$user')";
+$sql = "INSERT INTO gps (latitude, longitude, user) VALUES ('$latitude', '$longitude', '$user') ON DUPLICATE KEY UPDATE latitude='$latitude', longitude='$longitude'";
 
 if ($conn->query($sql) === TRUE) {
-    echo "New record created successfully! ok";
+    echo "Record inserted or updated successfully! ok";
 } else {
     echo "Error: " . $sql . "<br>" . $conn->error;
 }
 
 $conn->close();
-?>
