@@ -12,7 +12,7 @@ $longitude = isset($_GET['longitude']) ? $_GET['longitude'] : '';
 $user = isset($_GET['user']) ? $_GET['user'] : '';
 $sql = "INSERT INTO gps (latitude, longitude, user) VALUES ('$latitude', '$longitude', '$user') ON DUPLICATE KEY UPDATE latitude='$latitude', longitude='$longitude'";
 if ($conn->query($sql) === TRUE) {
-    echo "OK";
+    echo "ok";
 } else {
     echo "BAD: " . $sql . "<br>" . $conn->error;
 }
