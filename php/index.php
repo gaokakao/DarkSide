@@ -7,34 +7,41 @@ $conn = new mysqli($servername, $username, $password, $dbname);
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
-$latitude = isset($_GET['latitude']) ? $_GET['latitude'] : '';
-$longitude = isset($_GET['longitude']) ? $_GET['longitude'] : '';
+$latitude = isset($_GET['latitude']) ? floatval($_GET['latitude']) : 0.0;
+$longitude = isset($_GET['longitude']) ? floatval($_GET['longitude']) : 0.0;
 $user = isset($_GET['user']) ? $_GET['user'] : '';
 $sql = "INSERT INTO gps (latitude, longitude, user) VALUES ('$latitude', '$longitude', '$user') ON DUPLICATE KEY UPDATE latitude='$latitude', longitude='$longitude'";
-$conn->query($sql);
-function calculateDistance($latitude1, $longitude1, $latitude2, $longitude2) {
-    $earthRadius = 6371000;
-    $latFrom = deg2rad($latitude1);
-    $lonFrom = deg2rad($longitude1);
-    $latTo = deg2rad($latitude2);
-    $lonTo = deg2rad($longitude2);
-    $latDelta = $latTo - $latFrom;
-    $lonDelta = $lonTo - $lonFrom;
-    $angle = 2 * asin(sqrt(pow(sin($latDelta / 2), 2) + cos($latFrom) * cos($latTo) * pow(sin($lonDelta / 2), 2)));
-    return $angle * $earthRadius;
+if ($conn->query($sql) !== TRUE) {
+    echo "BAD: " . $sql . "  " . $conn->error;
 }
 $sql = "SELECT user, latitude, longitude FROM gps WHERE user != '$user'";
 $result = $conn->query($sql);
-$distances = [];
+$users = [];
 if ($result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
-        $distance = calculateDistance($latitude, $longitude, $row['latitude'], $row['longitude']);
-        $distances[] = [
+        $userLatitude = $row['latitude'];
+        $userLongitude = $row['longitude'];
+        $distance = calculateDistance($latitude, $longitude, $userLatitude, $userLongitude);
+        $users[] = [
             'user' => $row['user'],
-            'distance' => round($distance, 3)
+            'distance' => $distance
         ];
     }
 }
+echo json_encode($users);
 $conn->close();
-header('Content-Type: application/json');
-echo json_encode($distances);
+function calculateDistance($latitude1, $longitude1, $latitude2, $longitude2) {
+    $earthRadius = 6371000;
+    $latitude1 = deg2rad($latitude1);
+    $longitude1 = deg2rad($longitude1);
+    $latitude2 = deg2rad($latitude2);
+    $longitude2 = deg2rad($longitude2);
+    $deltaLatitude = $latitude2 - $latitude1;
+    $deltaLongitude = $longitude2 - $longitude1;
+    $a = sin($deltaLatitude / 2) * sin($deltaLatitude / 2) +
+        cos($latitude1) * cos($latitude2) *
+        sin($deltaLongitude / 2) * sin($deltaLongitude / 2);
+    $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+    return $earthRadius * $c;
+}
+?>
