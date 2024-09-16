@@ -19,8 +19,8 @@ $result = $conn->query($sql);
 $users = [];
 if ($result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
-        $userLatitude = $row['latitude'];
-        $userLongitude = $row['longitude'];
+        $userLatitude = floatval($row['latitude']);
+        $userLongitude = floatval($row['longitude']);
         $distance = calculateDistance($latitude, $longitude, $userLatitude, $userLongitude);
         $users[] = [
             'user' => $row['user'],
