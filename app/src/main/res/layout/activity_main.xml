@@ -2,21 +2,33 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
+
     <LinearLayout
-        android:id="@+id/user_bar"
+        android:id="@+id/user"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:orientation="vertical"
-        android:gravity="center"
-        android:background="@color/username_bar_bg">
+        android:background="@color/username_bar_bg"
+        android:padding="10dp">
+
         <TextView
-            android:id="@+id/user"
+            android:id="@+id/username_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/white"
             android:textSize="20sp"
+            android:textColor="@color/white"
             android:textStyle="bold"
-            android:text="USERNAME" />
+            android:gravity="center_horizontal" />
     </LinearLayout>
+
+    <TextView
+        android:id="@+id/users_list_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/user"
+        android:padding="16dp"
+        android:textSize="16sp"
+        android:textColor="@color/white" />
+
 </RelativeLayout>

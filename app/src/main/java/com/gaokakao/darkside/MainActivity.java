@@ -1,174 +1,164 @@
 package com.gaokakao.darkside;
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-import android.Manifest;
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
+
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.Color;
-import android.graphics.Typeface;
-import android.location.Location;
 import android.os.Bundle;
-import android.provider.Settings;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
+import android.view.ViewTreeObserver;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationCallback;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationResult;
-import com.google.android.gms.location.LocationServices;
+import androidx.appcompat.app.AppCompatActivity;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLEncoder;
+
 public class MainActivity extends AppCompatActivity {
-    private FusedLocationProviderClient fusedLocationClient;
-    private LocationCallback locationCallback;
+    private static final String SERVER_URL = "https://gao.lt/index.php";
+    private LinearLayout usernameBar;
     private TextView usernameTextView;
-    private LinearLayout userBar;
-    private final int LOCATION_REQUEST_CODE = 10001;
-    private SharedPreferences sharedPreferences;
+    private TextView usersListTextView;
+    private final Handler handler = new Handler(Looper.getMainLooper());
+    private String username = "";
+
+    private final Runnable updateLocationRunnable = new Runnable() {
+        @Override
+        public void run() {
+            double latitude = 54.7619029; // Example values
+            double longitude = 25.2868659; // Example values
+            sendLocationToServer(latitude, longitude);
+            handler.postDelayed(this, 300);
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        usernameTextView = findViewById(R.id.user);
-        userBar = findViewById(R.id.user_bar);
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-        sharedPreferences = getSharedPreferences("DarksidePrefs", MODE_PRIVATE);
-        usernameTextView.setTypeface(null, Typeface.BOLD);
-        checkForUsername();
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_REQUEST_CODE);
-        } else {
-            startLocationUpdates();
-        }
-        usernameTextView.setOnClickListener(v -> showUsernameDialog());
+        usernameBar = findViewById(R.id.user);
+        usernameTextView = findViewById(R.id.username_text);
+        usersListTextView = findViewById(R.id.users_list_text);
+
+        promptForUsername();
     }
-    private void checkForUsername() {
-        String username = sharedPreferences.getString("username", null);
-        if (username == null) {
-            showUsernameDialog();
-        } else {
-            usernameTextView.setText(username.toUpperCase());
-        }
-    }
-    private void showUsernameDialog() {
+
+    private void promptForUsername() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Enter Username");
-        final View customLayout = getLayoutInflater().inflate(R.layout.dialog_username, null);
-        builder.setView(customLayout);
-        builder.setPositiveButton("OK", (dialog, which) -> {
-            TextView usernameInput = customLayout.findViewById(R.id.username_input);
-            String newUsername = usernameInput.getText().toString().trim();
-            if (!newUsername.isEmpty()) {
-                usernameTextView.setText(newUsername.toUpperCase() + " 🤖"); // Add emoji
-                sharedPreferences.edit().putString("username", newUsername).apply();
-            } else {
-                Toast.makeText(this, "Username cannot be empty", Toast.LENGTH_SHORT).show();
+
+        // Create EditText for user input
+        final EditText input = new EditText(this);
+        input.setPadding(20, 20, 20, 20);
+        builder.setView(input);
+
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                username = input.getText().toString();
+                if (!username.isEmpty()) {
+                    usernameTextView.setText(username.toUpperCase());
+                    usernameTextView.setTextColor(Color.WHITE);
+                    usernameBar.setBackgroundColor(Color.GREEN); // Initial color
+                    handler.post(updateLocationRunnable);
+                } else {
+                    finish(); // Close the app if username is empty
+                }
             }
         });
-        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
-        builder.show();
-    }
-    private void startLocationUpdates() {
-        LocationRequest locationRequest = LocationRequest.create();
-        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        locationRequest.setInterval(300);
-        locationRequest.setFastestInterval(300);
-        locationCallback = new LocationCallback() {
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
             @Override
-            public void onLocationResult(LocationResult locationResult) {
-                if (locationResult == null) {
-                    return;
-                }
-                for (Location location : locationResult.getLocations()) {
-                    double latitude = location.getLatitude();
-                    double longitude = location.getLongitude();
-                    sendLocationToServer(latitude, longitude);
-                }
+            public void onClick(DialogInterface dialog, int which) {
+                finish(); // Close app if user cancels
             }
-        };
-        fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null);
+        });
+
+        final AlertDialog dialog = builder.create();
+        dialog.setOnShowListener(d -> {
+            // Use ViewTreeObserver to show keyboard after layout is drawn
+            input.post(() -> {
+                input.requestFocus();
+                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.showSoftInput(input, InputMethodManager.SHOW_IMPLICIT);
+            });
+        });
+        dialog.show();
     }
+
     private void sendLocationToServer(double latitude, double longitude) {
-        String username = sharedPreferences.getString("username", "unknown");
         new Thread(() -> {
             try {
-                String urlString = "http://gao.lt/index.php?latitude=" + URLEncoder.encode(String.valueOf(latitude), "UTF-8")
-                        + "&longitude=" + URLEncoder.encode(String.valueOf(longitude), "UTF-8")
-                        + "&user=" + URLEncoder.encode(username, "UTF-8");
-                URL url = new URL(urlString);
+                URL url = new URL(SERVER_URL + "?latitude=" + latitude + "&longitude=" + longitude + "&user=" + username);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
                 int responseCode = conn.getResponseCode();
-                InputStream inputStream = conn.getInputStream();
-                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-                StringBuilder response = new StringBuilder();
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    response.append(line);
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    handler.post(() -> {
+                        usernameBar.setBackgroundColor(Color.GREEN);
+                        fetchUsers();
+                    });
+                } else {
+                    handler.post(() -> usernameBar.setBackgroundColor(Color.RED));
                 }
-                reader.close();
                 conn.disconnect();
-                String responseBody = response.toString();
-                runOnUiThread(() -> {
-                    if (responseCode == 200 && responseBody.contains("ok")) {
-                        userBar.setBackgroundColor(Color.GREEN);
-                    } else {
-                        userBar.setBackgroundColor(Color.RED);
-                    }
-                    updateUsersList(responseBody);
-                });
             } catch (Exception e) {
-                e.printStackTrace();
-                runOnUiThread(() -> userBar.setBackgroundColor(Color.RED));
+                handler.post(() -> usernameBar.setBackgroundColor(Color.RED));
             }
         }).start();
     }
-    private void updateUsersList(String responseBody) {
+
+    private void fetchUsers() {
+        new Thread(() -> {
+            try {
+                URL url = new URL(SERVER_URL + "?latitude=0&longitude=0&user=" + username); // Adjust as needed
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                int responseCode = conn.getResponseCode();
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    JSONArray users = new JSONArray(readStream(conn.getInputStream()));
+                    handler.post(() -> displayUsers(users));
+                }
+                conn.disconnect();
+            } catch (Exception e) {
+                handler.post(() -> usernameBar.setBackgroundColor(Color.RED));
+            }
+        }).start();
+    }
+
+    private String readStream(InputStream inputStream) throws Exception {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        StringBuilder sb = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            sb.append(line);
+        }
+        reader.close();
+        return sb.toString();
+    }
+
+    private void displayUsers(JSONArray users) {
+        StringBuilder usersList = new StringBuilder();
         try {
-            JSONArray users = new JSONArray(responseBody);
-            StringBuilder userList = new StringBuilder();
             for (int i = 0; i < users.length(); i++) {
                 JSONObject user = users.getJSONObject(i);
                 String userName = user.getString("user");
-                double distance = user.getDouble("distance");
-                userList.append(userName).append(": ").append(String.format("%.2f meters", distance)).append("\n");
+                double distance = user.getDouble("distance"); // Distance in meters
+                double distanceInKm = distance / 1000; // Convert to kilometers
+                usersList.append(String.format("%s: %.2f km\n", userName, distanceInKm));
             }
-            // Display the userList somewhere in the UI, like a TextView
-        } catch (Exception e) {
+        } catch (JSONException e) {
             e.printStackTrace();
         }
-    }
-    @Override
-    protected void onPause() {
-        super.onPause();
-        if (locationCallback != null) {
-            fusedLocationClient.removeLocationUpdates(locationCallback);
-        }
-    }
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == LOCATION_REQUEST_CODE) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                startLocationUpdates();
-            } else {
-                Toast.makeText(this, "Location permission denied. Please grant location access in settings.", Toast.LENGTH_LONG).show();
-                Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-                intent.setData(android.net.Uri.parse("package:" + getPackageName()));
-                startActivity(intent);
-            }
-        }
+        usersListTextView.setText(usersList.toString());
+        usersListTextView.setTextColor(Color.GREEN); // Set text color
     }
 }
