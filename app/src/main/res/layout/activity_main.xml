@@ -3,35 +3,32 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- Top bar for username -->
     <LinearLayout
         android:id="@+id/user"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
+        android:layout_alignParentTop="true"
+        android:orientation="vertical"
         android:background="@color/username_bar_bg"
-        android:padding="10dp"
-        android:gravity="center">
+        android:padding="10dp">
 
         <TextView
             android:id="@+id/username_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="USERNAME"
-            android:textColor="@android:color/white"
-            android:textSize="18sp"
+            android:textSize="20sp"
+            android:textColor="@color/white"
             android:textStyle="bold"
-            android:layout_gravity="center"/>
+            android:gravity="center_horizontal" />
     </LinearLayout>
 
-    <!-- Users list text view -->
     <TextView
         android:id="@+id/users_list_text"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/user"
-        android:layout_margin="16dp"
-        android:textColor="@android:color/holo_green_dark"
-        android:textSize="16sp"/>
+        android:padding="16dp"
+        android:textSize="16sp"
+        android:textColor="@color/white" />
 
 </RelativeLayout>
