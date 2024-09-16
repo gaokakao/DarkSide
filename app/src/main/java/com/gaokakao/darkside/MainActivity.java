@@ -27,11 +27,10 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.Random;
 public class MainActivity extends AppCompatActivity {
     private FusedLocationProviderClient fusedLocationClient;
     private LocationCallback locationCallback;
-    private TextView latitudeText;
-    private TextView longitudeText;
     private TextView usernameTextView;
     private final int LOCATION_REQUEST_CODE = 10001;
     private SharedPreferences sharedPreferences;
@@ -39,8 +38,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        latitudeText = findViewById(R.id.latitude_text);
-        longitudeText = findViewById(R.id.longitude_text);
         usernameTextView = findViewById(R.id.username_text_view);
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         sharedPreferences = getSharedPreferences("DarksidePrefs", MODE_PRIVATE);
@@ -58,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
         if (username == null) {
             showUsernameDialog();
         } else {
-            usernameTextView.setText(username);
+            usernameTextView.setText(username.toUpperCase());
         }
     }
     private void showUsernameDialog() {
@@ -70,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
             TextView usernameInput = customLayout.findViewById(R.id.username_input);
             String newUsername = usernameInput.getText().toString().trim();
             if (!newUsername.isEmpty()) {
-                usernameTextView.setText(newUsername);
+                usernameTextView.setText(newUsername.toUpperCase());
                 sharedPreferences.edit().putString("username", newUsername).apply();
             } else {
                 Toast.makeText(this, "Username cannot be empty", Toast.LENGTH_SHORT).show();
@@ -93,8 +90,6 @@ public class MainActivity extends AppCompatActivity {
                 for (Location location : locationResult.getLocations()) {
                     double latitude = location.getLatitude();
                     double longitude = location.getLongitude();
-                    latitudeText.setText("Lat: " + latitude);
-                    longitudeText.setText("Lon: " + longitude);
                     sendLocationToServer(latitude, longitude);
                 }
             }
