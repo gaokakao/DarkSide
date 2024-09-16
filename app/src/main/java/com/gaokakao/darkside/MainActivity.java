@@ -1,5 +1,4 @@
 package com.gaokakao.darkside;
-
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -13,6 +12,7 @@ import android.location.Location;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.core.app.ActivityCompat;
@@ -23,7 +23,6 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -31,35 +30,30 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
-
 public class MainActivity extends AppCompatActivity {
     private FusedLocationProviderClient fusedLocationClient;
     private LocationCallback locationCallback;
     private TextView usernameTextView;
+    private LinearLayout userBar;
     private final int LOCATION_REQUEST_CODE = 10001;
     private SharedPreferences sharedPreferences;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
         usernameTextView = findViewById(R.id.user);
+        userBar = findViewById(R.id.user_bar);
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         sharedPreferences = getSharedPreferences("DarksidePrefs", MODE_PRIVATE);
-
         usernameTextView.setTypeface(null, Typeface.BOLD);
         checkForUsername();
-
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_REQUEST_CODE);
         } else {
             startLocationUpdates();
         }
-
         usernameTextView.setOnClickListener(v -> showUsernameDialog());
     }
-
     private void checkForUsername() {
         String username = sharedPreferences.getString("username", null);
         if (username == null) {
@@ -68,34 +62,29 @@ public class MainActivity extends AppCompatActivity {
             usernameTextView.setText(username.toUpperCase());
         }
     }
-
     private void showUsernameDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Enter Username");
         final View customLayout = getLayoutInflater().inflate(R.layout.dialog_username, null);
         builder.setView(customLayout);
-
         builder.setPositiveButton("OK", (dialog, which) -> {
             TextView usernameInput = customLayout.findViewById(R.id.username_input);
             String newUsername = usernameInput.getText().toString().trim();
             if (!newUsername.isEmpty()) {
-                usernameTextView.setText(newUsername.toUpperCase());
+                usernameTextView.setText(newUsername.toUpperCase() + " 🤖"); // Add emoji
                 sharedPreferences.edit().putString("username", newUsername).apply();
             } else {
                 Toast.makeText(this, "Username cannot be empty", Toast.LENGTH_SHORT).show();
             }
         });
-
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
         builder.show();
     }
-
     private void startLocationUpdates() {
         LocationRequest locationRequest = LocationRequest.create();
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         locationRequest.setInterval(300);
         locationRequest.setFastestInterval(300);
-
         locationCallback = new LocationCallback() {
             @Override
             public void onLocationResult(LocationResult locationResult) {
@@ -111,7 +100,6 @@ public class MainActivity extends AppCompatActivity {
         };
         fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null);
     }
-
     private void sendLocationToServer(double latitude, double longitude) {
         String username = sharedPreferences.getString("username", "unknown");
         new Thread(() -> {
@@ -119,11 +107,9 @@ public class MainActivity extends AppCompatActivity {
                 String urlString = "http://gao.lt/index.php?latitude=" + URLEncoder.encode(String.valueOf(latitude), "UTF-8")
                         + "&longitude=" + URLEncoder.encode(String.valueOf(longitude), "UTF-8")
                         + "&user=" + URLEncoder.encode(username, "UTF-8");
-
                 URL url = new URL(urlString);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
-
                 int responseCode = conn.getResponseCode();
                 InputStream inputStream = conn.getInputStream();
                 BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
@@ -134,42 +120,36 @@ public class MainActivity extends AppCompatActivity {
                 }
                 reader.close();
                 conn.disconnect();
-
                 String responseBody = response.toString();
                 runOnUiThread(() -> {
                     if (responseCode == 200 && responseBody.contains("ok")) {
-                        usernameTextView.setBackgroundColor(Color.GREEN);
+                        userBar.setBackgroundColor(Color.GREEN);
                     } else {
-                        usernameTextView.setBackgroundColor(Color.RED);
+                        userBar.setBackgroundColor(Color.RED);
                     }
-                    parseUserDistances(responseBody);
+                    updateUsersList(responseBody);
                 });
             } catch (Exception e) {
                 e.printStackTrace();
-                runOnUiThread(() -> {
-                    usernameTextView.setBackgroundColor(Color.RED);
-                });
+                runOnUiThread(() -> userBar.setBackgroundColor(Color.RED));
             }
         }).start();
     }
-
-    private void parseUserDistances(String responseBody) {
+    private void updateUsersList(String responseBody) {
         try {
             JSONArray users = new JSONArray(responseBody);
-            StringBuilder distances = new StringBuilder();
+            StringBuilder userList = new StringBuilder();
             for (int i = 0; i < users.length(); i++) {
                 JSONObject user = users.getJSONObject(i);
-                String name = user.getString("name");
+                String userName = user.getString("user");
                 double distance = user.getDouble("distance");
-                distances.append(name).append(": ").append(distance).append(" meters\n");
+                userList.append(userName).append(": ").append(String.format("%.2f meters", distance)).append("\n");
             }
-            usernameTextView.setText(distances.toString());
-            usernameTextView.setTextColor(Color.GREEN);
-        } catch (JSONException e) {
+            // Display the userList somewhere in the UI, like a TextView
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
-
     @Override
     protected void onPause() {
         super.onPause();
@@ -177,7 +157,6 @@ public class MainActivity extends AppCompatActivity {
             fusedLocationClient.removeLocationUpdates(locationCallback);
         }
     }
-
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
