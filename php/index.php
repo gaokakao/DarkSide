@@ -14,6 +14,6 @@ $sql = "INSERT INTO gps (latitude, longitude, user) VALUES ('$latitude', '$longi
 if ($conn->query($sql) === TRUE) {
     echo "ok";
 } else {
-    echo "BAD: " . $sql . "<br>" . $conn->error;
+    echo "BAD: " . $sql . "  " . $conn->error;
 }
 $conn->close();

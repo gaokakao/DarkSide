@@ -5,39 +5,35 @@
     android:orientation="vertical"
     android:padding="16dp"
     android:gravity="top">
-
-    <TextView
-        android:id="@+id/username_text_view"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:id="@+id/username_bar"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Username"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:layout_gravity="start" />
-
+        android:orientation="horizontal"
+        android:layout_gravity="top"
+        android:padding="8dp"
+        android:background="@android:color/darker_gray"
+        android:gravity="center">
+        <TextView
+            android:id="@+id/username_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Username"
+            android:textSize="20sp"
+            android:textColor="@android:color/white"
+            android:textStyle="bold"/>
+    </LinearLayout>
     <TextView
         android:id="@+id/latitude_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Lat: "
         android:textSize="18sp"
-        android:layout_marginTop="20dp" />
-
+        android:layout_marginTop="20dp"/>
     <TextView
         android:id="@+id/longitude_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Lon: "
-        android:textSize="18sp" />
-
-    <TextView
-        android:id="@+id/result_text_view"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:layout_alignParentBottom="true"
-        android:background="#E0E0E0"
-        android:padding="8dp"
-        android:text="Result will appear here"
-        android:textSize="16sp" />
+        android:textSize="18sp"/>
 </LinearLayout>
