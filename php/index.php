@@ -4,16 +4,16 @@ $username = "user";
 $password = "user";
 $dbname = "gps";
 $conn = new mysqli($servername, $username, $password, $dbname);
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
+
+if ($conn->connect_error) { die("Connection failed: " . $conn->connect_error); }
 
 $latitude = isset($_GET['latitude']) ? (float)$_GET['latitude'] : 0;
 $longitude = isset($_GET['longitude']) ? (float)$_GET['longitude'] : 0;
 $user = isset($_GET['user']) ? $_GET['user'] : '';
 
 $sql = "INSERT INTO gps (latitude, longitude, user) VALUES ('$latitude', '$longitude', '$user') ON DUPLICATE KEY UPDATE latitude='$latitude', longitude='$longitude'";
-if ($conn->query($sql) === TRUE) {
+if ($conn->query($sql) === TRUE)
+{
     $sql = "SELECT user, latitude, longitude FROM gps";
     $result = $conn->query($sql);
     $users = [];
@@ -27,13 +27,17 @@ if ($conn->query($sql) === TRUE) {
         $users[] = $row;
     }
     echo json_encode($users);
-} else {
+}
+
+else
+{
     echo "BAD: " . $sql . " " . $conn->error;
 }
 $conn->close();
 
-function calculateDistance($latitude1, $longitude1, $latitude2, $longitude2) {
-    $earthRadius = 6371000; // Earth radius in meters
+function calculateDistance($latitude1, $longitude1, $latitude2, $longitude2)
+{
+    $earthRadius = 6371000;
     $dLat = deg2rad($latitude2 - $latitude1);
     $dLon = deg2rad($longitude2 - $longitude1);
     $a = sin($dLat / 2) * sin($dLat / 2) +
