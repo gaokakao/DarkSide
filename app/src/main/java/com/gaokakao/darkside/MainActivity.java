@@ -7,7 +7,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
-import android.view.ViewTreeObserver;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -47,8 +46,19 @@ public class MainActivity extends AppCompatActivity {
         usernameBar = findViewById(R.id.user);
         usernameTextView = findViewById(R.id.username_text);
         usersListTextView = findViewById(R.id.users_list_text);
+
+        String savedUsername = getSharedPreferences("appPrefs", MODE_PRIVATE).getString("username", "");
+        if (savedUsername.isEmpty()) {
+            promptForUsername();
+        } else {
+            username = savedUsername;
+            usernameTextView.setText(username.toUpperCase());
+            usernameTextView.setTextColor(Color.WHITE);
+            usernameBar.setBackgroundColor(Color.GREEN);
+            handler.post(updateLocationRunnable);
+        }
+
         usernameBar.setOnClickListener(v -> promptForUsername());
-        promptForUsername();
     }
 
     private void promptForUsername() {
@@ -57,18 +67,29 @@ public class MainActivity extends AppCompatActivity {
         final EditText input = new EditText(this);
         input.setPadding(20, 20, 20, 20);
         builder.setView(input);
-        builder.setPositiveButton("OK", (dialog, which) -> {
-            username = input.getText().toString();
-            if (!username.isEmpty()) {
-                usernameTextView.setText(username.toUpperCase());
-                usernameTextView.setTextColor(Color.WHITE);
-                usernameBar.setBackgroundColor(Color.GREEN);
-                handler.post(updateLocationRunnable);
-            } else {
+
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                username = input.getText().toString();
+                if (!username.isEmpty()) {
+                    getSharedPreferences("appPrefs", MODE_PRIVATE).edit().putString("username", username).apply();
+                    usernameTextView.setText(username.toUpperCase());
+                    usernameTextView.setTextColor(Color.WHITE);
+                    usernameBar.setBackgroundColor(Color.GREEN);
+                    handler.post(updateLocationRunnable);
+                } else {
+                    finish();
+                }
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
                 finish();
             }
         });
-        builder.setNegativeButton("Cancel", (dialog, which) -> finish());
+
         final AlertDialog dialog = builder.create();
         dialog.setOnShowListener(d -> {
             input.post(() -> {
