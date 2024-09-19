@@ -1,5 +1,4 @@
 package com.gaokakao.darkside;
-
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -34,8 +33,8 @@ public class MainActivity extends AppCompatActivity {
     private final Runnable updateLocationRunnable = new Runnable() {
         @Override
         public void run() {
-            double latitude = 54.7619029; // Example values
-            double longitude = 25.2868659; // Example values
+            double latitude = 54.7619029;
+            double longitude = 25.2868659;
             sendLocationToServer(latitude, longitude);
             handler.postDelayed(this, 300);
         }
@@ -48,43 +47,30 @@ public class MainActivity extends AppCompatActivity {
         usernameBar = findViewById(R.id.user);
         usernameTextView = findViewById(R.id.username_text);
         usersListTextView = findViewById(R.id.users_list_text);
-
+        usernameBar.setOnClickListener(v -> promptForUsername());
         promptForUsername();
     }
 
     private void promptForUsername() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Enter Username");
-
-        // Create EditText for user input
         final EditText input = new EditText(this);
         input.setPadding(20, 20, 20, 20);
         builder.setView(input);
-
-        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                username = input.getText().toString();
-                if (!username.isEmpty()) {
-                    usernameTextView.setText(username.toUpperCase());
-                    usernameTextView.setTextColor(Color.WHITE);
-                    usernameBar.setBackgroundColor(Color.GREEN); // Initial color
-                    handler.post(updateLocationRunnable);
-                } else {
-                    finish(); // Close the app if username is empty
-                }
+        builder.setPositiveButton("OK", (dialog, which) -> {
+            username = input.getText().toString();
+            if (!username.isEmpty()) {
+                usernameTextView.setText(username.toUpperCase());
+                usernameTextView.setTextColor(Color.WHITE);
+                usernameBar.setBackgroundColor(Color.GREEN);
+                handler.post(updateLocationRunnable);
+            } else {
+                finish();
             }
         });
-        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                finish(); // Close app if user cancels
-            }
-        });
-
+        builder.setNegativeButton("Cancel", (dialog, which) -> finish());
         final AlertDialog dialog = builder.create();
         dialog.setOnShowListener(d -> {
-            // Use ViewTreeObserver to show keyboard after layout is drawn
             input.post(() -> {
                 input.requestFocus();
                 InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -119,7 +105,7 @@ public class MainActivity extends AppCompatActivity {
     private void fetchUsers() {
         new Thread(() -> {
             try {
-                URL url = new URL(SERVER_URL + "?latitude=0&longitude=0&user=" + username); // Adjust as needed
+                URL url = new URL(SERVER_URL + "?latitude=0&longitude=0&user=" + username);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
                 int responseCode = conn.getResponseCode();
@@ -151,14 +137,15 @@ public class MainActivity extends AppCompatActivity {
             for (int i = 0; i < users.length(); i++) {
                 JSONObject user = users.getJSONObject(i);
                 String userName = user.getString("user");
-                double distance = user.getDouble("distance"); // Distance in meters
-                double distanceInKm = distance / 1000; // Convert to kilometers
-                usersList.append(String.format("%s: %.2f km\n", userName, distanceInKm));
+                if (!userName.equals(username)) {
+                    double distance = user.getDouble("distance");
+                    usersList.append(String.format("%s: %.2f km\n", userName, distance));
+                }
             }
         } catch (JSONException e) {
             e.printStackTrace();
         }
         usersListTextView.setText(usersList.toString());
-        usersListTextView.setTextColor(Color.GREEN); // Set text color
+        usersListTextView.setTextColor(Color.GREEN);
     }
 }
