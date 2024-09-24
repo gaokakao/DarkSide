@@ -9,13 +9,16 @@ if ($conn->connect_error) {
 }
 $latitude = isset($_GET['latitude']) ? (float)$_GET['latitude'] : 0;
 $longitude = isset($_GET['longitude']) ? (float)$_GET['longitude'] : 0;
-$user = isset($_GET['user']) ? $_GET['user'] : '';
+$user = isset($_GET['user']) ? $_GET['user'] : 'empty';
 $sql = "SELECT * FROM gps WHERE user='$user'";
 $result = $conn->query($sql);
-if ($result->num_rows > 0) {
-    $sql = "UPDATE gps SET latitude='$latitude', longitude='$longitude' WHERE user='$user'";
-} else {
-    $sql = "INSERT INTO gps (latitude,longitude,user) VALUES ('$latitude','$longitude','$user')";
+if ($result->num_rows > 0)
+{
+$sql = "UPDATE gps SET latitude='$latitude', longitude='$longitude' WHERE user='$user'";
+}
+ else
+{
+$sql = "INSERT INTO gps (latitude,longitude,user) VALUES ('$latitude','$longitude','$user')";
 }
 $conn->query($sql);
 $sql = "SELECT user,latitude,longitude FROM gps";
@@ -30,6 +33,7 @@ while ($row = $result->fetch_assoc()) {
 }
 echo json_encode($users);
 $conn->close();
+
 function calculateDistance($latitude1, $longitude1, $latitude2, $longitude2)
 {
     $earthRadius = 6371000;
