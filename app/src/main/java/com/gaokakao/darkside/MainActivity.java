@@ -11,7 +11,6 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -28,8 +27,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 public class MainActivity extends AppCompatActivity {
-    private static final String SERVER_URL = "https://gao.lt/gps.php";
-    private static final int LOCATION_REQUEST_CODE = 100;
     private LinearLayout usernameBar;
     private TextView usernameTextView;
     private TextView usersListTextView;
@@ -37,12 +34,14 @@ public class MainActivity extends AppCompatActivity {
     private String username = "";
     private LocationManager locationManager;
     private LocationListener locationListener;
+    private double latitude = 0;
+    private double longitude = 0;
 
     private final Runnable updateLocationRunnable = new Runnable() {
         @Override
         public void run() {
             if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, LOCATION_REQUEST_CODE);
+                ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 100);
                 return;
             }
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
@@ -57,20 +56,21 @@ public class MainActivity extends AppCompatActivity {
         usernameBar = findViewById(R.id.user);
         usernameTextView = findViewById(R.id.username_text);
         usersListTextView = findViewById(R.id.users_list_text);
-
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         locationListener = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
-                double latitude = location.getLatitude();
-                double longitude = location.getLongitude();
-                sendLocationToServer(latitude, longitude);
+                latitude = location.getLatitude();
+                longitude = location.getLongitude();
+                sendLocationToServer();
             }
 
             @Override
             public void onStatusChanged(String provider, int status, Bundle extras) {}
+
             @Override
             public void onProviderEnabled(String provider) {}
+
             @Override
             public void onProviderDisabled(String provider) {}
         };
@@ -91,7 +91,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void promptForUsername() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("KLYČKA");
+        builder.setTitle("Enter Username");
         final EditText input = new EditText(this);
         input.setPadding(20, 20, 20, 20);
         builder.setView(input);
@@ -129,38 +129,21 @@ public class MainActivity extends AppCompatActivity {
         dialog.show();
     }
 
-    private void sendLocationToServer(double latitude, double longitude) {
+    private void sendLocationToServer() {
         new Thread(() -> {
             try {
-                URL url = new URL(SERVER_URL + "?latitude=" + latitude + "&longitude=" + longitude + "&user=" + username);
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.setRequestMethod("GET");
-                int responseCode = conn.getResponseCode();
-                if (responseCode == HttpURLConnection.HTTP_OK) {
-                    handler.post(() -> {
-                        usernameBar.setBackgroundColor(Color.GREEN);
-                        fetchUsers();
-                    });
-                } else {
-                    handler.post(() -> usernameBar.setBackgroundColor(Color.RED));
-                }
-                conn.disconnect();
-            } catch (Exception e) {
-                handler.post(() -> usernameBar.setBackgroundColor(Color.RED));
-            }
-        }).start();
-    }
-
-    private void fetchUsers() {
-        new Thread(() -> {
-            try {
-                URL url = new URL(SERVER_URL + "?latitude=0&longitude=0&user=" + username);
+                URL url = new URL("https://gao.lt/gps.php" + "?latitude=" + latitude + "&longitude=" + longitude + "&user=" + username);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
                 int responseCode = conn.getResponseCode();
                 if (responseCode == HttpURLConnection.HTTP_OK) {
                     JSONArray users = new JSONArray(readStream(conn.getInputStream()));
-                    handler.post(() -> displayUsers(users));
+                    handler.post(() -> {
+                        usernameBar.setBackgroundColor(Color.GREEN);
+                        displayUsers(users);
+                    });
+                } else {
+                    handler.post(() -> usernameBar.setBackgroundColor(Color.RED));
                 }
                 conn.disconnect();
             } catch (Exception e) {
@@ -188,7 +171,7 @@ public class MainActivity extends AppCompatActivity {
                 String userName = user.getString("user");
                 if (!userName.equals(username)) {
                     double distance = user.getDouble("distance");
-                    usersList.append(String.format("%s: %.2f km\n", userName, distance));
+                    usersList.append(String.format("%s: %.2f meters\n", userName, distance));
                 }
             }
         } catch (JSONException e) {
