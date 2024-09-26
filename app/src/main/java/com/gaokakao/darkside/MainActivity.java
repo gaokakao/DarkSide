@@ -1,8 +1,13 @@
 package com.gaokakao.darkside;
+import android.Manifest;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -12,6 +17,7 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -22,20 +28,25 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 public class MainActivity extends AppCompatActivity {
-    private static final String SERVER_URL = "https://gao.lt/index.php";
+    private static final String SERVER_URL = "https://gao.lt/gps.php";
+    private static final int LOCATION_REQUEST_CODE = 100;
     private LinearLayout usernameBar;
     private TextView usernameTextView;
     private TextView usersListTextView;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private String username = "";
+    private LocationManager locationManager;
+    private LocationListener locationListener;
 
     private final Runnable updateLocationRunnable = new Runnable() {
         @Override
         public void run() {
-            double latitude = 54.7619029;
-            double longitude = 25.2868659;
-            sendLocationToServer(latitude, longitude);
-            handler.postDelayed(this, 300);
+            if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, LOCATION_REQUEST_CODE);
+                return;
+            }
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+            handler.postDelayed(this, 250);
         }
     };
 
@@ -46,6 +57,23 @@ public class MainActivity extends AppCompatActivity {
         usernameBar = findViewById(R.id.user);
         usernameTextView = findViewById(R.id.username_text);
         usersListTextView = findViewById(R.id.users_list_text);
+
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        locationListener = new LocationListener() {
+            @Override
+            public void onLocationChanged(Location location) {
+                double latitude = location.getLatitude();
+                double longitude = location.getLongitude();
+                sendLocationToServer(latitude, longitude);
+            }
+
+            @Override
+            public void onStatusChanged(String provider, int status, Bundle extras) {}
+            @Override
+            public void onProviderEnabled(String provider) {}
+            @Override
+            public void onProviderDisabled(String provider) {}
+        };
 
         String savedUsername = getSharedPreferences("appPrefs", MODE_PRIVATE).getString("username", "");
         if (savedUsername.isEmpty()) {
@@ -63,7 +91,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void promptForUsername() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Enter Username");
+        builder.setTitle("KLYČKA");
         final EditText input = new EditText(this);
         input.setPadding(20, 20, 20, 20);
         builder.setView(input);

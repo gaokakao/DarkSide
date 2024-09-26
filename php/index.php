@@ -1,12 +1,7 @@
 <?php
-$servername = "localhost";
-$username = "user";
-$password = "user";
-$dbname = "gps";
+$servername = "localhost"; $username = "user"; $password = "user"; $dbname = "gps";
 $conn = new mysqli($servername, $username, $password, $dbname);
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
+if ($conn->connect_error) {    die("Connection failed: " . $conn->connect_error);}
 $latitude = isset($_GET['latitude']) ? (float)$_GET['latitude'] : 0;
 $longitude = isset($_GET['longitude']) ? (float)$_GET['longitude'] : 0;
 $user = isset($_GET['user']) ? $_GET['user'] : 'empty';
