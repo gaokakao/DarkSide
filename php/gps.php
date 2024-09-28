@@ -20,7 +20,7 @@ if ($result->num_rows > 0) {
 } else {
     $sql->query("INSERT INTO gps (latitude,longitude,user) VALUES ($latitude,$longitude,'$user')");
 }
-$sql->query("DELETE FROM gps WHERE user 'empty");
+$sql->query("DELETE FROM gps WHERE user 'empty'");
 $result = $sql->query("SELECT user,latitude,longitude FROM gps");
 $users = [];
 while ($row = $result->fetch_assoc()) {
