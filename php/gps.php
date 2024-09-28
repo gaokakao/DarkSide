@@ -13,14 +13,14 @@ $latitude = isset($_GET['latitude']) ? (float)$_GET['latitude'] : 0;
 $longitude = isset($_GET['longitude']) ? (float)$_GET['longitude'] : 0;
 $user = isset($_GET['user']) ? $_GET['user'] : 'empty';
 
-$sql->query("DELETE FROM gps WHERE user 'empty'");
+$sql->query("DELETE FROM gps WHERE user = 'empty'");
 $result = $sql->query("SELECT * FROM gps WHERE user='$user'");
 if ($result->num_rows > 0) {
     $sql->query("UPDATE gps SET latitude=$latitude, longitude=$longitude WHERE user='$user'");
 } else {
     $sql->query("INSERT INTO gps (latitude,longitude,user) VALUES ($latitude,$longitude,'$user')");
 }
-$sql->query("DELETE FROM gps WHERE user 'empty'");
+$sql->query("DELETE FROM gps WHERE user = 'empty'");
 $result = $sql->query("SELECT user,latitude,longitude FROM gps");
 $users = [];
 while ($row = $result->fetch_assoc()) {
