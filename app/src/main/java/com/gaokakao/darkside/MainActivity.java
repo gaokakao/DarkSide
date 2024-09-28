@@ -25,7 +25,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-
 public class MainActivity extends AppCompatActivity {
     private LinearLayout usernameBar;
     private TextView usernameTextView;
@@ -36,7 +35,6 @@ public class MainActivity extends AppCompatActivity {
     private LocationListener locationListener;
     private double latitude = 0;
     private double longitude = 0;
-
     private final Runnable updateLocationRunnable = new Runnable() {
         @Override
         public void run() {
@@ -48,7 +46,6 @@ public class MainActivity extends AppCompatActivity {
             handler.postDelayed(this, 250);
         }
     };
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -64,7 +61,6 @@ public class MainActivity extends AppCompatActivity {
                 longitude = location.getLongitude();
                 sendLocationToServer();
             }
-
             @Override
             public void onStatusChanged(String provider, int status, Bundle extras) {}
 
@@ -85,17 +81,14 @@ public class MainActivity extends AppCompatActivity {
             usernameBar.setBackgroundColor(Color.GREEN);
             handler.post(updateLocationRunnable);
         }
-
         usernameBar.setOnClickListener(v -> promptForUsername());
     }
-
     private void promptForUsername() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Enter Username");
         final EditText input = new EditText(this);
         input.setPadding(20, 20, 20, 20);
         builder.setView(input);
-
         builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
@@ -117,7 +110,6 @@ public class MainActivity extends AppCompatActivity {
                 finish();
             }
         });
-
         final AlertDialog dialog = builder.create();
         dialog.setOnShowListener(d -> {
             input.post(() -> {
@@ -128,7 +120,6 @@ public class MainActivity extends AppCompatActivity {
         });
         dialog.show();
     }
-
     private void sendLocationToServer() {
         new Thread(() -> {
             try {
@@ -151,7 +142,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }).start();
     }
-
     private String readStream(InputStream inputStream) throws Exception {
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
         StringBuilder sb = new StringBuilder();
@@ -162,7 +152,6 @@ public class MainActivity extends AppCompatActivity {
         reader.close();
         return sb.toString();
     }
-
     private void displayUsers(JSONArray users) {
         StringBuilder usersList = new StringBuilder();
         try {
@@ -171,7 +160,7 @@ public class MainActivity extends AppCompatActivity {
                 String userName = user.getString("user");
                 if (!userName.equals(username)) {
                     double distance = user.getDouble("distance");
-                    usersList.append(String.format("%s: %.2f meters\n", userName, distance));
+                    usersList.append(String.format("%s: %.2f metrai\n", userName, distance));
                 }
             }
         } catch (JSONException e) {
