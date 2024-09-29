@@ -1,0 +1,37 @@
+Forever remember these things:
+never use sudo
+ never explain.
+ never add comments to code
+ never add empty lines to code
+ Most importantly Do not explain just print code and instructions.
+ be as short as possible
+remember to print only commands  that work in windows 10 with powershell always
+Remember workstation i'm working with is windows 10 so give commands that can run on windows 10 powershell
+
+Android studio Project darkside settings
+Java for language
+Project name is DarkSide
+Aplication name is DarkSide
+Package Name is com.gaokakao.darkside
+Minimum SDK API 33 "Tiramisu" Android 12
+all solutions must work on Android 13
+PHP backend server domain name dns is gao.lt
+gao.lt uses nginx server withssl  certificate
+gao.lt server is ubuntu 22.04
+certificate file locations
+/etcnginx/gao.crt
+/etc/nginx/gao.key
+google cloud project id chrome-ranger-431611-u3
+google cloud zone is europe-north1-a
+I've created new Android Studio project for phone app.
+I Selected Empty Views activity for new project and Java for language.
+Aplication functionality
+at first app launch user must enter username
+on startup the dialog box pops up and asks for user to enter username and provides text box which is already focuded and keyboard open also automatically
+application rememebers that username and display it at the top of application windows in a colored bar with white bold lettters san serif font horizontally centered  the background  color is red if gps data is unsuccessfully sent to server gao.lt and green otherwise
+when clicked or touched username user should be able to rename username by touching or clicking username
+application every 300 miliseconds updates current gps locations - latitude and longitude and sends username latitude and longitude to serrver gao.lt
+get query https://gao.lt/index.php?latitude=333.11&longitude=231.23&username= whatever user entered into text box application presented with keyboard when lauching application
+the php on server gao.lt records all users with gps data. on every location update gao.lt php server must calculate distance between currect user that is updating it's location and all other users and return list of users with distances to them in meteres and return this uset list with distances in meters to applicaiton and applicaion displays user list with distances in meters the color text is green for username and violet for distance
+
+print all files and I mean any type of files required for aplication

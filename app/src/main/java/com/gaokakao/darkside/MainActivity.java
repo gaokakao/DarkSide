@@ -43,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
-            handler.postDelayed(this, 250);
+            handler.postDelayed(this, 2000000);
         }
     };
     @Override
