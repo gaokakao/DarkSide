@@ -1,31 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@android:color/black">
+    android:layout_height="match_parent">
+
     <LinearLayout
         android:id="@+id/user"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:orientation="vertical"
-        android:background="@color/username_bar_bg"
-        android:padding="10dp">
+        android:orientation="horizontal"
+        android:background="@android:color/holo_green_dark"
+        android:padding="10dp"
+        android:gravity="center">
+
         <TextView
             android:id="@+id/username_text"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="20sp"
-            android:textColor="@color/white"
-            android:textStyle="bold"
-            android:gravity="center" />
+            android:textSize="18sp"
+            android:textColor="@android:color/white"
+            android:layout_gravity="center" />
     </LinearLayout>
-    <TextView
-        android:id="@+id/users_list_text"
+
+    <com.gaokakao.darkside.UserMapView
+        android:id="@+id/user_map_view"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:layout_below="@id/user"
-        android:padding="16dp"
-        android:textColor="@color/white"
-        android:textSize="16sp" />
+        android:background="#005500" />
+
 </RelativeLayout>

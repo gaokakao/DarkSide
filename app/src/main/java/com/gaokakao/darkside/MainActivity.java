@@ -20,20 +20,16 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private LinearLayout usernameBar;
     private TextView usernameTextView;
-    private TextView usersListTextView;
+    private UserMapView userMapView;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private String username = "";
     private LocationManager locationManager;
@@ -48,6 +44,7 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 300, 0, locationListener);
+            handler.postDelayed(this, 300);
         }
     };
 
@@ -57,9 +54,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         usernameBar = findViewById(R.id.user);
         usernameTextView = findViewById(R.id.username_text);
-        usersListTextView = findViewById(R.id.users_list_text);
+        userMapView = findViewById(R.id.user_map_view);
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-
         locationListener = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
@@ -67,7 +63,6 @@ public class MainActivity extends AppCompatActivity {
                 longitude = location.getLongitude();
                 sendLocationToServer();
             }
-
             @Override
             public void onStatusChanged(String provider, int status, Bundle extras) {}
             @Override
@@ -85,9 +80,7 @@ public class MainActivity extends AppCompatActivity {
             usernameTextView.setTextColor(Color.WHITE);
             usernameBar.setBackgroundColor(Color.GREEN);
             handler.post(updateLocationRunnable);
-            sendLocationToServer(); // Send location on startup
         }
-
         usernameBar.setOnClickListener(v -> promptForUsername());
     }
 
@@ -97,20 +90,27 @@ public class MainActivity extends AppCompatActivity {
         final EditText input = new EditText(this);
         input.setPadding(20, 20, 20, 20);
         builder.setView(input);
-        builder.setPositiveButton("OK", (dialog, which) -> {
-            username = input.getText().toString();
-            if (!username.isEmpty()) {
-                getSharedPreferences("appPrefs", MODE_PRIVATE).edit().putString("username", username).apply();
-                usernameTextView.setText(username.toUpperCase());
-                usernameTextView.setTextColor(Color.WHITE);
-                usernameBar.setBackgroundColor(Color.GREEN);
-                handler.post(updateLocationRunnable);
-                sendLocationToServer(); // Send location on startup
-            } else {
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                username = input.getText().toString();
+                if (!username.isEmpty()) {
+                    getSharedPreferences("appPrefs", MODE_PRIVATE).edit().putString("username", username).apply();
+                    usernameTextView.setText(username.toUpperCase());
+                    usernameTextView.setTextColor(Color.WHITE);
+                    usernameBar.setBackgroundColor(Color.GREEN);
+                    handler.post(updateLocationRunnable);
+                } else {
+                    finish();
+                }
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
                 finish();
             }
         });
-        builder.setNegativeButton("Cancel", (dialog, which) -> finish());
         final AlertDialog dialog = builder.create();
         dialog.setOnShowListener(d -> {
             input.post(() -> {
@@ -125,23 +125,22 @@ public class MainActivity extends AppCompatActivity {
     private void sendLocationToServer() {
         new Thread(() -> {
             try {
-                URL url = new URL("https://gao.lt/gps.php?latitude=" + latitude + "&longitude=" + longitude + "&user=" + username);
+                URL url = new URL("https://gao.lt/gps.php" + "?latitude=" + latitude + "&longitude=" + longitude + "&user=" + username);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
-                conn.setConnectTimeout(5000);
-                conn.setReadTimeout(5000);
                 int responseCode = conn.getResponseCode();
                 if (responseCode == HttpURLConnection.HTTP_OK) {
-                    usernameBar.setBackgroundColor(Color.GREEN);
                     JSONArray users = new JSONArray(readStream(conn.getInputStream()));
-                    handler.post(() -> displayUsers(users));
+                    handler.post(() -> {
+                        usernameBar.setBackgroundColor(Color.GREEN);
+                        userMapView.updateUserLocations(users, latitude, longitude);
+                    });
                 } else {
                     handler.post(() -> usernameBar.setBackgroundColor(Color.RED));
                 }
                 conn.disconnect();
             } catch (Exception e) {
                 handler.post(() -> usernameBar.setBackgroundColor(Color.RED));
-                e.printStackTrace();
             }
         }).start();
     }
@@ -155,35 +154,5 @@ public class MainActivity extends AppCompatActivity {
         }
         reader.close();
         return sb.toString();
-    }
-
-    private void displayUsers(JSONArray users) {
-        StringBuilder usersList = new StringBuilder();
-        try {
-            List<JSONObject> userList = new ArrayList<>();
-            for (int i = 0; i < users.length(); i++) {
-                JSONObject user = users.getJSONObject(i);
-                if (!user.getString("user").equals(username)) {
-                    userList.add(user);
-                }
-            }
-            userList.sort(Comparator.comparingDouble(user -> {
-                try {
-                    return user.getDouble("distance");
-                } catch (JSONException e) {
-                    return Double.MAX_VALUE;
-                }
-            }));
-
-            for (JSONObject user : userList) {
-                String userName = user.getString("user");
-                double distance = user.getDouble("distance");
-                usersList.append(userName).append(" ").append(Math.round(distance)).append(" metrai\n");
-            }
-            usersListTextView.setText(usersList.toString());
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        usersListTextView.setTextColor(Color.GREEN);
     }
 }
