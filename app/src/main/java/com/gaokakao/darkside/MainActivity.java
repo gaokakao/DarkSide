@@ -47,8 +47,7 @@ public class MainActivity extends AppCompatActivity {
                 ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 100);
                 return;
             }
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
-            handler.postDelayed(this, 2000);
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 300, 0, locationListener);
         }
     };
 
@@ -60,6 +59,7 @@ public class MainActivity extends AppCompatActivity {
         usernameTextView = findViewById(R.id.username_text);
         usersListTextView = findViewById(R.id.users_list_text);
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+
         locationListener = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
@@ -67,6 +67,7 @@ public class MainActivity extends AppCompatActivity {
                 longitude = location.getLongitude();
                 sendLocationToServer();
             }
+
             @Override
             public void onStatusChanged(String provider, int status, Bundle extras) {}
             @Override
@@ -84,7 +85,9 @@ public class MainActivity extends AppCompatActivity {
             usernameTextView.setTextColor(Color.WHITE);
             usernameBar.setBackgroundColor(Color.GREEN);
             handler.post(updateLocationRunnable);
+            sendLocationToServer(); // Send location on startup
         }
+
         usernameBar.setOnClickListener(v -> promptForUsername());
     }
 
@@ -94,27 +97,20 @@ public class MainActivity extends AppCompatActivity {
         final EditText input = new EditText(this);
         input.setPadding(20, 20, 20, 20);
         builder.setView(input);
-        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                username = input.getText().toString();
-                if (!username.isEmpty()) {
-                    getSharedPreferences("appPrefs", MODE_PRIVATE).edit().putString("username", username).apply();
-                    usernameTextView.setText(username.toUpperCase());
-                    usernameTextView.setTextColor(Color.WHITE);
-                    usernameBar.setBackgroundColor(Color.GREEN);
-                    handler.post(updateLocationRunnable);
-                } else {
-                    finish();
-                }
-            }
-        });
-        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
+        builder.setPositiveButton("OK", (dialog, which) -> {
+            username = input.getText().toString();
+            if (!username.isEmpty()) {
+                getSharedPreferences("appPrefs", MODE_PRIVATE).edit().putString("username", username).apply();
+                usernameTextView.setText(username.toUpperCase());
+                usernameTextView.setTextColor(Color.WHITE);
+                usernameBar.setBackgroundColor(Color.GREEN);
+                handler.post(updateLocationRunnable);
+                sendLocationToServer(); // Send location on startup
+            } else {
                 finish();
             }
         });
+        builder.setNegativeButton("Cancel", (dialog, which) -> finish());
         final AlertDialog dialog = builder.create();
         dialog.setOnShowListener(d -> {
             input.post(() -> {
@@ -129,22 +125,23 @@ public class MainActivity extends AppCompatActivity {
     private void sendLocationToServer() {
         new Thread(() -> {
             try {
-                URL url = new URL("https://gao.lt/gps.php" + "?latitude=" + latitude + "&longitude=" + longitude + "&user=" + username);
+                URL url = new URL("https://gao.lt/gps.php?latitude=" + latitude + "&longitude=" + longitude + "&user=" + username);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
+                conn.setConnectTimeout(5000);
+                conn.setReadTimeout(5000);
                 int responseCode = conn.getResponseCode();
                 if (responseCode == HttpURLConnection.HTTP_OK) {
+                    usernameBar.setBackgroundColor(Color.GREEN);
                     JSONArray users = new JSONArray(readStream(conn.getInputStream()));
-                    handler.post(() -> {
-                        usernameBar.setBackgroundColor(Color.GREEN);
-                        displayUsers(users);
-                    });
+                    handler.post(() -> displayUsers(users));
                 } else {
                     handler.post(() -> usernameBar.setBackgroundColor(Color.RED));
                 }
                 conn.disconnect();
             } catch (Exception e) {
                 handler.post(() -> usernameBar.setBackgroundColor(Color.RED));
+                e.printStackTrace();
             }
         }).start();
     }
