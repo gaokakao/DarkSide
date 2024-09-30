@@ -1,4 +1,5 @@
 package com.gaokakao.darkside;
+
 import android.Manifest;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -25,6 +26,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+
 public class MainActivity extends AppCompatActivity {
     private LinearLayout usernameBar;
     private TextView usernameTextView;
@@ -43,9 +48,10 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
-            handler.postDelayed(this, 2000000);
+            handler.postDelayed(this, 2000);
         }
     };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -63,10 +69,8 @@ public class MainActivity extends AppCompatActivity {
             }
             @Override
             public void onStatusChanged(String provider, int status, Bundle extras) {}
-
             @Override
             public void onProviderEnabled(String provider) {}
-
             @Override
             public void onProviderDisabled(String provider) {}
         };
@@ -83,6 +87,7 @@ public class MainActivity extends AppCompatActivity {
         }
         usernameBar.setOnClickListener(v -> promptForUsername());
     }
+
     private void promptForUsername() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Enter Username");
@@ -120,6 +125,7 @@ public class MainActivity extends AppCompatActivity {
         });
         dialog.show();
     }
+
     private void sendLocationToServer() {
         new Thread(() -> {
             try {
@@ -142,6 +148,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }).start();
     }
+
     private String readStream(InputStream inputStream) throws Exception {
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
         StringBuilder sb = new StringBuilder();
@@ -152,21 +159,34 @@ public class MainActivity extends AppCompatActivity {
         reader.close();
         return sb.toString();
     }
+
     private void displayUsers(JSONArray users) {
         StringBuilder usersList = new StringBuilder();
         try {
+            List<JSONObject> userList = new ArrayList<>();
             for (int i = 0; i < users.length(); i++) {
                 JSONObject user = users.getJSONObject(i);
-                String userName = user.getString("user");
-                if (!userName.equals(username)) {
-                    double distance = user.getDouble("distance");
-                    usersList.append(String.format("%s: %.2f metrai\n", userName, distance));
+                if (!user.getString("user").equals(username)) {
+                    userList.add(user);
                 }
             }
+            userList.sort(Comparator.comparingDouble(user -> {
+                try {
+                    return user.getDouble("distance");
+                } catch (JSONException e) {
+                    return Double.MAX_VALUE;
+                }
+            }));
+
+            for (JSONObject user : userList) {
+                String userName = user.getString("user");
+                double distance = user.getDouble("distance");
+                usersList.append(userName).append(" ").append(Math.round(distance)).append(" metrai\n");
+            }
+            usersListTextView.setText(usersList.toString());
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        usersListTextView.setText(usersList.toString());
         usersListTextView.setTextColor(Color.GREEN);
     }
 }
