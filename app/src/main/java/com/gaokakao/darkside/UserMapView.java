@@ -6,11 +6,12 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.view.View;
+
 import org.json.JSONArray;
-import org.json.JSONException;
+import org.json.JSONObject;
 
 public class UserMapView extends View {
-    private Paint userPaint;
+    private Paint currentUserPaint;
     private Paint otherUserPaint;
     private double currentLatitude;
     private double currentLongitude;
@@ -18,45 +19,75 @@ public class UserMapView extends View {
 
     public UserMapView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        userPaint = new Paint();
-        userPaint.setColor(Color.BLUE);
-        userPaint.setStyle(Paint.Style.FILL);
+        init();
+    }
+
+    private void init() {
+        currentUserPaint = new Paint();
+        currentUserPaint.setColor(Color.BLUE);
+        currentUserPaint.setStyle(Paint.Style.FILL);
 
         otherUserPaint = new Paint();
         otherUserPaint.setColor(Color.WHITE);
         otherUserPaint.setStyle(Paint.Style.FILL);
     }
 
-    public void updateUserLocations(JSONArray users, double currentLat, double currentLon) {
+    public void updateUserLocation(double latitude, double longitude) {
+        this.currentLatitude = latitude;
+        this.currentLongitude = longitude;
+        invalidate();
+    }
+
+    public void updateUserLocations(JSONArray users) {
         this.users = users;
-        this.currentLatitude = currentLat;
-        this.currentLongitude = currentLon;
-        invalidate(); // Redraw the view
+        invalidate();
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        float width = getWidth();
-        float height = getHeight();
-
-        // Draw current user at center
-        float radius = 20;
-        canvas.drawCircle(width / 2, height / 2, radius, userPaint);
-
-        // Draw other users
         if (users != null) {
+            drawUsers(canvas);
+        }
+    }
+
+    private void drawUsers(Canvas canvas) {
+        float minX = (float) currentLongitude;
+        float minY = (float) currentLatitude;
+        float maxX = (float) currentLongitude;
+        float maxY = (float) currentLatitude;
+
+        try {
             for (int i = 0; i < users.length(); i++) {
-                try {
-                    double lat = users.getJSONObject(i).getDouble("latitude");
-                    double lon = users.getJSONObject(i).getDouble("longitude");
-                    float userX = (float) ((lon - currentLongitude) * 100000) + (width / 2);
-                    float userY = (float) ((lat - currentLatitude) * 100000) + (height / 2);
-                    canvas.drawCircle(userX, userY, radius / 2, otherUserPaint);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
+                JSONObject user = users.getJSONObject(i);
+                double userLat = user.getDouble("latitude");
+                double userLong = user.getDouble("longitude");
+
+                minX = (float) Math.min(minX, userLong);
+                minY = (float) Math.min(minY, userLat);
+                maxX = (float) Math.max(maxX, userLong);
+                maxY = (float) Math.max(maxY, userLat);
             }
+
+            float scaleFactor = Math.min(getWidth() / (Math.abs(maxX - minX) * 100000), getHeight() / (Math.abs(maxY - minY) * 100000));
+            float offsetX = (float) ((maxX + minX) / 2);
+            float offsetY = (float) ((maxY + minY) / 2);
+
+            for (int i = 0; i < users.length(); i++) {
+                JSONObject user = users.getJSONObject(i);
+                double userLat = user.getDouble("latitude");
+                double userLong = user.getDouble("longitude");
+
+                float x = (float) ((userLong - offsetX) * scaleFactor + getWidth() / 2);
+                float y = (float) ((userLat - offsetY) * scaleFactor + getHeight() / 2);
+                canvas.drawCircle(x, y, 10, otherUserPaint);
+            }
+
+            float currentX = getWidth() / 2;
+            float currentY = getHeight() / 2;
+            canvas.drawCircle(currentX, currentY, 15, currentUserPaint);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }
