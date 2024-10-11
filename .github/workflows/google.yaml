@@ -1,4 +1,4 @@
-name: Copy PHP Files
+name: Deploy PHP Files
 on:
   push:
     branches:

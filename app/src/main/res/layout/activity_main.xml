@@ -1,23 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#004d00">
-
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:gravity="top">
+    <LinearLayout
+        android:id="@+id/username_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_gravity="top"
+        android:padding="8dp"
+        android:background="@android:color/darker_gray"
+        android:gravity="center">
+        <TextView
+            android:id="@+id/username_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Username"
+            android:textSize="20sp"
+            android:textColor="@android:color/white"
+            android:textStyle="bold"/>
+    </LinearLayout>
     <TextView
-        android:id="@+id/usernameTextView"
+        android:id="@+id/latitude_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Username"
-        android:textColor="#FFFFFF"
-        android:textSize="20sp"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        android:padding="16dp"/>
-
-    <com.gaokakao.darkside.UserMapView
-        android:id="@+id/userMapView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@id/usernameTextView" />
-</RelativeLayout>
+        android:text="Lat: "
+        android:textSize="18sp"
+        android:layout_marginTop="20dp"/>
+    <TextView
+        android:id="@+id/longitude_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Lon: "
+        android:textSize="18sp"/>
+</LinearLayout>
