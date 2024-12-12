@@ -36,8 +36,6 @@ Copy code
 Sign up or log in.
 Enable GPS to find friends near you.
 Start connecting!
-📋 License
-This project is licensed under the MIT License.
 
 🤝 Contributing
 We welcome contributions! Please check the Contributing Guidelines.
