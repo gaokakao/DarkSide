@@ -15,8 +15,6 @@ Darkside is a location-based social app that helps you connect with friends usin
 ---
 
 ## 📸 Screenshots
-![Screenshot 1](https://via.placeholder.com/500x300)
-![Screenshot 2](https://via.placeholder.com/500x300)
 
 ---
 
